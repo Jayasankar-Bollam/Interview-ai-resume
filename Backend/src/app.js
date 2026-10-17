@@ -53,6 +53,20 @@ app.use(
     })
 );
 
+app.get("/", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Interview AI Backend is running!"
+    });
+});
+
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Server is healthy"
+    });
+});
+
 // Routes
 const authRouter = require("./routes/auth.routes");
 const interviewRouter = require("./routes/interview.routes");
