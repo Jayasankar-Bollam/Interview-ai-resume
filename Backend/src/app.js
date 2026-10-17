@@ -90,22 +90,19 @@ const cors = require("cors");
 
 const app = express();
 
-const allowedOrigins = [
-"http://localhost:5173",
-"https://interview-ai-resume.vercel.app",
-];
-
 app.use(
-cors({
-origin: allowedOrigins,
-credentials: true,
-})
+    cors({
+        origin: [
+            "http://localhost:5173",
+            "https://interview-ai-resume.vercel.app"
+        ],
+        credentials: true
+    })
 );
 
 app.use(express.json());
 app.use(cookieParser());
 
-// Authentication routes
 const authRouter = require("./routes/auth.routes");
 const interviewRouter = require("./routes/interview.routes");
 
