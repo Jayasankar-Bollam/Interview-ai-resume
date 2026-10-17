@@ -1,66 +1,106 @@
-import axios from "axios"
+// import axios from "axios"
 
+
+// const api = axios.create({
+//     baseURL: "http://localhost:3000",
+//     withCredentials: true
+// })
+
+// export async function register({ username, email, password }) {
+
+//     try {
+//         const response = await api.post('/api/auth/register', {
+//             username, email, password
+//         })
+
+//         return response.data
+
+//     } catch (err) {
+
+//         console.log(err)
+
+//     }
+
+// }
+
+// export async function login({ email, password }) {
+
+//     try {
+
+//         const response = await api.post("/api/auth/login", {
+//             email, password
+//         })
+
+//         return response.data
+
+//     } catch (err) {
+//         console.log(err)
+//     }
+
+// }
+
+// export async function logout() {
+//     try {
+
+//         const response = await api.get("/api/auth/logout")
+
+//         return response.data
+
+//     } catch (err) {
+
+//     }
+// }
+
+// export async function getMe() {
+
+//     try {
+
+//         const response = await api.get("/api/auth/get-me")
+
+//         return response.data
+
+//     } catch (err) {
+//         console.log(err)
+//     }
+
+// }
+
+import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:3000",
+    baseURL:
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:3000",
     withCredentials: true
-})
+});
 
-export async function register({ username, email, password }) {
+export const login = async ({ email, password }) => {
+    const response = await api.post("/api/auth/login", {
+        email,
+        password
+    });
 
-    try {
-        const response = await api.post('/api/auth/register', {
-            username, email, password
-        })
+    return response.data;
+};
 
-        return response.data
+export const register = async ({ username, email, password }) => {
+    const response = await api.post("/api/auth/register", {
+        username,
+        email,
+        password
+    });
 
-    } catch (err) {
+    return response.data;
+};
 
-        console.log(err)
+export const logout = async () => {
+    const response = await api.get("/api/auth/logout");
 
-    }
+    return response.data;
+};
 
-}
+export const getMe = async () => {
+    const response = await api.get("/api/auth/get-me");
 
-export async function login({ email, password }) {
-
-    try {
-
-        const response = await api.post("/api/auth/login", {
-            email, password
-        })
-
-        return response.data
-
-    } catch (err) {
-        console.log(err)
-    }
-
-}
-
-export async function logout() {
-    try {
-
-        const response = await api.get("/api/auth/logout")
-
-        return response.data
-
-    } catch (err) {
-
-    }
-}
-
-export async function getMe() {
-
-    try {
-
-        const response = await api.get("/api/auth/get-me")
-
-        return response.data
-
-    } catch (err) {
-        console.log(err)
-    }
-
-}
+    return response.data;
+};
