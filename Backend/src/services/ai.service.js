@@ -16,7 +16,7 @@ const interviewReportSchema = z.object({
         answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
     })).describe("Technical questions that can be asked in the interview along with their intention and how to answer them"),
     behavioralQuestions: z.array(z.object({
-        question: z.string().describe("The technical question can be asked in the interview"),
+        question: z.string().describe("The behavioral question can be asked in the interview"),
         intention: z.string().describe("The intention of interviewer behind asking this question"),
         answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
     })).describe("Behavioral questions that can be asked in the interview along with their intention and how to answer them"),
@@ -34,7 +34,6 @@ const interviewReportSchema = z.object({
 
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
 
-
     const prompt = `Generate an interview report for a candidate with the following details:
                         Resume: ${resume}
                         Self Description: ${selfDescription}
@@ -51,29 +50,43 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
     })
 
     return JSON.parse(response.text)
-
-
 }
 
 
-
 async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" })
-
-    const pdfBuffer = await page.pdf({
-        format: "A4", margin: {
-            top: "20mm",
-            bottom: "20mm",
-            left: "15mm",
-            right: "15mm"
-        }
+    // Launch options needed to run Chrome on Render (no sandbox, low memory use)
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+        ],
     })
 
-    await browser.close()
+    try {
+        const page = await browser.newPage()
 
-    return pdfBuffer
+        // The HTML has no external resources, so no need to wait for network idle
+        await page.setContent(htmlContent, { waitUntil: "domcontentloaded" })
+
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true, // keeps the colors Gemini adds
+            margin: {
+                top: "20mm",
+                bottom: "20mm",
+                left: "15mm",
+                right: "15mm"
+            }
+        })
+
+        return pdfBuffer
+    } finally {
+        // Always close Chrome, even if something above throws
+        await browser.close()
+    }
 }
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
@@ -104,13 +117,11 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
         }
     })
 
-
     const jsonContent = JSON.parse(response.text)
 
     const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
 
     return pdfBuffer
-
 }
 
 module.exports = { generateInterviewReport, generateResumePdf }
