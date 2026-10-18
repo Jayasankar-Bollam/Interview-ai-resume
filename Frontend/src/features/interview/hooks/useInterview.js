@@ -1,13 +1,14 @@
 import { getAllInterviewReports, generateInterviewReport, getInterviewReportById, generateResumePdf } from "../services/interview.api"
 import { useContext, useEffect } from "react"
 import { InterviewContext } from "../interview.context"
+import { useAuth } from "../../auth/hooks/useAuth"
 import { useParams } from "react-router"
-
 
 export const useInterview = () => {
 
     const context = useContext(InterviewContext)
     const { interviewId } = useParams()
+    const { user, loading: authLoading } = useAuth()
 
     if (!context) {
         throw new Error("useInterview must be used within an InterviewProvider")
@@ -17,61 +18,61 @@ export const useInterview = () => {
 
     const generateReport = async ({ jobDescription, selfDescription, resumeFile }) => {
         setLoading(true)
-        let response = null
         try {
-            response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile })
+            const response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile })
             setReport(response.interviewReport)
+            return response.interviewReport
         } catch (error) {
             console.log(error)
+            return null
         } finally {
             setLoading(false)
         }
-
-        return response.interviewReport
     }
 
-    const getReportById = async (interviewId) => {
+    const getReportById = async (id) => {
         setLoading(true)
-        let response = null
         try {
-            response = await getInterviewReportById(interviewId)
+            const response = await getInterviewReportById(id)
             setReport(response.interviewReport)
+            return response.interviewReport
         } catch (error) {
             console.log(error)
+            return null
         } finally {
             setLoading(false)
         }
-        return response.interviewReport
     }
 
     const getReports = async () => {
         setLoading(true)
-        let response = null
         try {
-            response = await getAllInterviewReports()
-            setReports(response.interviewReports)
+            const response = await getAllInterviewReports()
+            const list = response?.interviewReports ?? []
+            setReports(list)
+            return list
         } catch (error) {
             console.log(error)
+            setReports([])
+            return []
         } finally {
             setLoading(false)
         }
-
-        return response.interviewReports
     }
 
     const getResumePdf = async (interviewReportId) => {
         setLoading(true)
-        let response = null
         try {
-            response = await generateResumePdf({ interviewReportId })
-            const url = window.URL.createObjectURL(new Blob([ response ], { type: "application/pdf" }))
+            const response = await generateResumePdf({ interviewReportId })
+            const url = window.URL.createObjectURL(new Blob([response], { type: "application/pdf" }))
             const link = document.createElement("a")
             link.href = url
             link.setAttribute("download", `resume_${interviewReportId}.pdf`)
             document.body.appendChild(link)
             link.click()
-        }
-        catch (error) {
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
             console.log(error)
         } finally {
             setLoading(false)
@@ -79,13 +80,14 @@ export const useInterview = () => {
     }
 
     useEffect(() => {
+        if (authLoading || !user) return // wait for login check, skip if logged out
+
         if (interviewId) {
             getReportById(interviewId)
         } else {
             getReports()
         }
-    }, [ interviewId ])
+    }, [interviewId, user, authLoading])
 
     return { loading, report, reports, generateReport, getReportById, getReports, getResumePdf }
-
 }

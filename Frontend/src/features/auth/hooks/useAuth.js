@@ -156,26 +156,26 @@ export const useAuth = () => {
         }
     };
 
-    useEffect(() => {
-        const getAndSetUser = async () => {
-            try {
-                const data = await getMe();
+    // useEffect(() => {
+    //     const getAndSetUser = async () => {
+    //         try {
+    //             const data = await getMe();
 
-                setUser(data.user);
-            } catch (err) {
-                console.error(
-                    "Get user failed:",
-                    err.response?.data || err.message
-                );
+    //             setUser(data.user);
+    //         } catch (err) {
+    //             console.error(
+    //                 "Get user failed:",
+    //                 err.response?.data || err.message
+    //             );
 
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+    //             setUser(null);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
 
-        getAndSetUser();
-    }, [setUser, setLoading]);
+    //     getAndSetUser();
+    // }, [setUser, setLoading]);
 
     return {
         user,
