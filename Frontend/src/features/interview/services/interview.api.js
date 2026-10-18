@@ -80,7 +80,7 @@ export const generateInterviewReport = async ({
     formData.append("selfDescription", selfDescription);
     formData.append("resume", resumeFile);
 
-    const response = await api.post("/api/interview/", formData);
+    const response = await api.get("/api/interview");
 
     return response.data;
 };
