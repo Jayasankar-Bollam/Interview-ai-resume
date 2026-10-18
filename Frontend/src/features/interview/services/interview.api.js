@@ -58,7 +58,6 @@
 //     return response.data
 // }
 
-
 import axios from "axios";
 
 const api = axios.create({
@@ -80,7 +79,7 @@ export const generateInterviewReport = async ({
     formData.append("selfDescription", selfDescription);
     formData.append("resume", resumeFile);
 
-    const response = await api.get("/api/interview");
+    const response = await api.post("/api/interview", formData);
 
     return response.data;
 };
@@ -100,7 +99,7 @@ export const getInterviewReportById = async (interviewId) => {
  * Get all interview reports for the logged-in user.
  */
 export const getAllInterviewReports = async () => {
-    const response = await api.get("/api/interview/");
+    const response = await api.get("/api/interview");
 
     return response.data;
 };
