@@ -90,18 +90,34 @@ const cors = require("cors");
 
 const app = express();
 
+app.set("trust proxy", 1); // Render sits behind a proxy
+
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://interview-ai-resume.vercel.app",
+];
+
 app.use(
     cors({
-        origin: [
-            "http://localhost:5173",
-            "https://interview-ai-resume.vercel.app"
-        ],
-        credentials: true
+        origin: (origin, callback) => {
+            if (
+                !origin ||
+                allowedOrigins.includes(origin) ||
+                /^https:\/\/interview-ai-resume-.*\.vercel\.app$/.test(origin)
+            ) {
+                callback(null, true);
+            } else {
+                callback(null, false); // reject without throwing a 500
+            }
+        },
+        credentials: true,
     })
 );
 
 app.use(express.json());
 app.use(cookieParser());
+
+// routes as before
 
 const authRouter = require("./routes/auth.routes");
 const interviewRouter = require("./routes/interview.routes");
