@@ -3,19 +3,63 @@ import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+]
+
 const Home = () => {
 
-    const { loading, generateReport,reports } = useInterview()
+    const { loading, generateReport, reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ resumeFile, setResumeFile ] = useState(null)
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
+    const handleResumeChange = (e) => {
+        const file = e.target.files[ 0 ]
+        if (!file) return
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            alert('Please upload a PDF or DOCX file.')
+            e.target.value = ''
+            setResumeFile(null)
+            return
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File is too large. Max size is 5MB.')
+            e.target.value = ''
+            setResumeFile(null)
+            return
+        }
+
+        setResumeFile(file)
+    }
+
+    const removeResume = (e) => {
+        // the dropzone is a <label>, so stop it from opening the file picker
+        e.preventDefault()
+        e.stopPropagation()
+        setResumeFile(null)
+        resumeInputRef.current.value = ''
+    }
+
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
+        if (!jobDescription.trim()) {
+            alert('Please paste the job description.')
+            return
+        }
+        if (!resumeFile && !selfDescription.trim()) {
+            alert('Please upload a resume or write a quick self-description.')
+            return
+        }
+
         const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        navigate(`/interview/${data._id}`)
+        if (data?._id) navigate(`/interview/${data._id}`)
     }
 
     if (loading) {
@@ -25,6 +69,8 @@ const Home = () => {
             </main>
         )
     }
+
+    const recentReports = reports ?? []
 
     return (
         <div className='home-page'>
@@ -49,12 +95,13 @@ const Home = () => {
                             <span className='badge badge--required'>Required</span>
                         </div>
                         <textarea
+                            value={jobDescription}
                             onChange={(e) => { setJobDescription(e.target.value) }}
                             className='panel__textarea'
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
                         />
-                        <div className='char-counter'>0 / 5000 chars</div>
+                        <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
                     </div>
 
                     {/* Vertical Divider */}
@@ -75,13 +122,26 @@ const Home = () => {
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
-                            <label className='dropzone' htmlFor='resume'>
-                                <span className='dropzone__icon'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
-                                </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
+                            <label className={`dropzone ${resumeFile ? 'dropzone--selected' : ''}`} htmlFor='resume'>
+                                {resumeFile ? (
+                                    <>
+                                        <span className='dropzone__icon dropzone__icon--ok'>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                        </span>
+                                        <p className='dropzone__title dropzone__filename'>{resumeFile.name}</p>
+                                        <p className='dropzone__subtitle'>{(resumeFile.size / 1024).toFixed(0)} KB • Uploaded and ready</p>
+                                        <button type='button' className='dropzone__remove' onClick={removeResume}>Remove</button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className='dropzone__icon'>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
+                                        </span>
+                                        <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
+                                        <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
+                                    </>
+                                )}
+                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' onChange={handleResumeChange} />
                             </label>
                         </div>
 
@@ -92,6 +152,7 @@ const Home = () => {
                         <div className='self-description'>
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
                             <textarea
+                                value={selfDescription}
                                 onChange={(e) => { setSelfDescription(e.target.value) }}
                                 id='selfDescription'
                                 name='selfDescription'
@@ -123,11 +184,11 @@ const Home = () => {
             </div>
 
             {/* Recent Reports List */}
-            {reports.length > 0 && (
+            {recentReports.length > 0 && (
                 <section className='recent-reports'>
                     <h2>My Recent Interview Plans</h2>
                     <ul className='reports-list'>
-                        {reports.map(report => (
+                        {recentReports.map(report => (
                             <li key={report._id} className='report-item' onClick={() => navigate(`/interview/${report._id}`)}>
                                 <h3>{report.title || 'Untitled Position'}</h3>
                                 <p className='report-meta'>Generated on {new Date(report.createdAt).toLocaleDateString()}</p>
